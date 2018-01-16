@@ -1,12 +1,14 @@
+using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using ChatApp.Data;
 using ChatApp.Services;
-using System.Runtime.InteropServices;
-using Microsoft.EntityFrameworkCore;
+using ChatApp.Hubs;
+using StackExchange.Redis;
 
 namespace ChatApp
 {
@@ -44,6 +46,15 @@ namespace ChatApp
                     options.Conventions.AuthorizePage("/Account/Logout");
                 });
 
+            var signalR = services.AddSignalR();
+            if (!string.IsNullOrEmpty(Configuration["RedisConnectionString"]))
+            {
+                signalR.AddRedis(options =>
+                {
+                    options.Factory = (w) => ConnectionMultiplexer.Connect(Configuration["RedisConnectionString"]);
+                });
+            }
+
             // Register no-op EmailSender used by account confirmation and password reset during development
             // For more information on how to enable account confirmation and password reset please visit https://go.microsoft.com/fwlink/?LinkID=532713
             services.AddSingleton<IEmailSender, EmailSender>();
@@ -66,6 +77,11 @@ namespace ChatApp
             app.UseStaticFiles();
 
             app.UseAuthentication();
+
+            app.UseSignalR(routes =>
+            {
+                routes.MapHub<Chat>("chat");
+            });
 
             app.UseMvc(routes =>
             {

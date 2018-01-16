@@ -16,15 +16,38 @@
         <input type="submit" id="send" value="Send" class="send" />
     </form>
 </div>
-
 <script src="https://unpkg.com/@@aspnet/signalr-client@1.0.0-alpha2-final/dist/browser/signalr-clientES5-1.0.0-alpha2-final.js" integrity="sha384-d0DyKu5pTAEIv8W1GkHAD2OZyyf/uvydsCOz3S+LUII6s/ZoO0VidAVIau06/nzk" crossorigin="anonymous"></script>
 <script>
+let transportType = signalR.TransportType[getParameterByName('transport')] || signalR.TransportType.WebSockets;
+let logger = new signalR.ConsoleLogger(signalR.LogLevel.Information);
+let connection = new signalR.HubConnection('/chat', { transport: transportType, logger: logger });
 
-// TODO: Connect to SignalR!
+connection.onclose(e => {
+    if (e) {
+        appendLine('Connection closed with error: ' + e, 'red');
+    }
+    else {
+        appendLine('Disconnected', 'green');
+    }
+});
+
+connection.on('UserJoined', user => {
+    addUserOnline(user);
+});
+
+connection.on('UserLeft', user => {
+    removeUserOnline(user);
+});
+
+connection.on('Send', (userName, message) => {
+    appendMessage(userName, message);
+});
+
+connection.start().catch(err => appendLine(err, 'red'));
 
 document.getElementById('sendmessage').addEventListener('submit', event => {
     let data = document.getElementById('new-message').value;
-    alert("TODO: Send to SignalR!");
+    connection.invoke('Send', data).catch(err => appendLine(err, 'red'));
     event.preventDefault();
 });
 
