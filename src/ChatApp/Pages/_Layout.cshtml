@@ -34,6 +34,7 @@
                     <li><a asp-page="/About">About</a></li>
                     <li><a asp-page="/Contact">Contact</a></li>
                 </ul>
+                @await Html.PartialAsync("_LoginPartial")
             </div>
         </div>
     </nav>
@@ -41,7 +42,7 @@
         @RenderBody()
         <hr />
         <footer>
-            <p>&copy; 2017 - ChatApp</p>
+            <p>&copy; 2017 - ChatApp; Machine: @Environment.MachineName</p>
         </footer>
     </div>
 
