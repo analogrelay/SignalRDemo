@@ -1,9 +1,10 @@
-﻿@page
+@page
 @model IndexModel
 @{
     ViewData["Title"] = "Home page";
 }
 
+<<<<<<< master
 <div id="myCarousel" class="carousel slide" data-ride="carousel" data-interval="6000">
     <ol class="carousel-indicators">
         <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
@@ -65,8 +66,27 @@
         <span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
         <span class="sr-only">Next</span>
     </a>
+=======
+<div id="chat-area">
+    <ul id="messages"></ul>
+    <ul id="users">
+        <li><b>Users online</b></li>
+    </ul>
+    <div class="clear">
+    </div>
+    <form id="sendmessage" action="#">
+        <input type="text" id="new-message" />
+        <input type="submit" id="send" value="Send" class="send" />
+    </form>
+>>>>>>> local
 </div>
+<script src="https://unpkg.com/@@aspnet/signalr-client@1.0.0-alpha2-final/dist/browser/signalr-clientES5-1.0.0-alpha2-final.js" integrity="sha384-d0DyKu5pTAEIv8W1GkHAD2OZyyf/uvydsCOz3S+LUII6s/ZoO0VidAVIau06/nzk" crossorigin="anonymous"></script>
+<script>
+let transportType = signalR.TransportType[getParameterByName('transport')] || signalR.TransportType.WebSockets;
+let logger = new signalR.ConsoleLogger(signalR.LogLevel.Information);
+let connection = new signalR.HubConnection('/chat', { transport: transportType, logger: logger });
 
+<<<<<<< master
 <div class="row">
     <div class="col-md-3">
         <h2>Application uses</h2>
@@ -106,3 +126,77 @@
         </ul>
     </div>
 </div>
+=======
+connection.onclose(e => {
+    if (e) {
+        appendLine('Connection closed with error: ' + e, 'red');
+    }
+    else {
+        appendLine('Disconnected', 'green');
+    }
+});
+
+connection.on('UserJoined', user => {
+    appendLine('User ' + user.name + ' joined the chat');
+    addUserOnline(user);
+});
+
+connection.on('UserLeft', user => {
+    appendLine('User ' + user.name + ' left the chat');
+    document.getElementById(user.connectionId).outerHTML = '';
+});
+
+connection.on('Send', (userName, message) => {
+    var nameElement = document.createElement('b');
+    nameElement.innerText = userName + ':';
+
+    var msgElement = document.createElement('span');
+    msgElement.innerText = ' ' + message;
+
+    var child = document.createElement('li');
+    child.appendChild(nameElement);
+    child.appendChild(msgElement);
+    document.getElementById('messages').appendChild(child);
+});
+
+connection.start().catch(err => appendLine(err, 'red'));
+
+document.getElementById('sendmessage').addEventListener('submit', event => {
+    let data = document.getElementById('new-message').value;
+    connection.invoke('Send', data).catch(err => appendLine(err, 'red'));
+    event.preventDefault();
+});
+
+function appendLine(line, color) {
+    let child = document.createElement('li');
+    if (color) {
+        child.style.color = color;
+    }
+    child.innerText = line;
+    document.getElementById('messages').appendChild(child);
+};
+
+function addUserOnline(user) {
+    if (document.getElementById(user.connectionId)) {
+        return;
+    }
+    var userLi = document.createElement('li');
+    userLi.innerText = `${user.name} (${user.connectionId})`;
+    userLi.id = user.connectionId;
+    document.getElementById('users').appendChild(userLi);
+}
+
+function getParameterByName(name, url) {
+    if (!url) {
+        url = window.location.href;
+    }
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+};
+
+</script>
+>>>>>>> local
